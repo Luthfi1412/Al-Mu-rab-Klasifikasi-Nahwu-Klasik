@@ -9,10 +9,35 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pesantren: {
+                            light: '#eceae0',
+                            dark: '#0c0a09',
+                            primary: '#4a3728',
+                            secondary: '#8b7355',
+                            accent: '#d4af37'
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Initialize theme before rendering to avoid flash
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fcfbf7;
+            transition: background-color 0.3s ease;
         }
         .arabic-text {
             font-family: 'Amiri', 'Noto Sans Arabic', serif;
@@ -24,6 +49,10 @@
         }
         .paper-texture {
             background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+        }
+        .dark .paper-texture {
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+            background-blend-mode: overlay;
         }
     </style>
 <script type="importmap">
@@ -38,7 +67,7 @@
 }
 </script>
 </head>
-<body>
+<body class="bg-pesantren-light dark:bg-pesantren-dark min-h-screen">
     <div id="root"></div>
 </body>
 </html>
