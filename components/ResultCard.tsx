@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AnalysisResult, SupportingBab } from '../types';
-import { Quote, Table, Info, Book, Layers, HelpCircle, GraduationCap } from 'lucide-react';
+import { Quote, Table, Info, Book, Layers, GraduationCap } from 'lucide-react';
 
 interface ResultCardProps {
   result: AnalysisResult;
@@ -44,12 +44,12 @@ const Tooltip: React.FC<{ term: string; definition: string; children: React.Reac
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
     >
-      <span className="cursor-help border-b border-dotted border-[#8b7355] hover:bg-[#d4af37]/10 transition-colors px-0.5 rounded">
+      <span className="cursor-help border-b border-dotted border-[#8b7355] hover:bg-[#d4af37]/10 transition-colors px-0.5 rounded" dir="rtl">
         {children}
       </span>
       {isVisible && (
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-[#4a3728] text-white text-[10px] rounded shadow-2xl z-50 pointer-events-none animate-in fade-in zoom-in duration-200 border border-[#d4af37]/30">
-          <strong className="block border-b border-[#d4af37]/50 mb-1 pb-1 text-[#d4af37] text-xs">{term}</strong>
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-[#4a3728] text-white text-[10px] rounded shadow-2xl z-50 pointer-events-none animate-in fade-in zoom-in duration-200 border border-[#d4af37]/30 text-left" dir="ltr">
+          <strong className="block border-b border-[#d4af37]/50 mb-1 pb-1 text-[#d4af37] text-xs arabic-text text-right" dir="rtl">{term}</strong>
           <span className="leading-relaxed opacity-90">{definition}</span>
           <span className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#4a3728]"></span>
         </span>
@@ -69,17 +69,17 @@ const BabTooltip: React.FC<{ bab: SupportingBab | { name: string; dalil_text: st
     >
       {children}
       {isVisible && (
-        <span className={`absolute ${isMain ? 'top-full left-0' : 'top-full left-1/2 -translate-x-1/2'} mt-2 w-72 p-4 bg-white text-[#2d1e12] rounded-lg shadow-2xl z-50 pointer-events-none animate-in fade-in slide-in-from-top-2 duration-200 border-2 border-[#d4af37]`}>
+        <span className={`absolute ${isMain ? 'top-full left-0' : 'top-full left-1/2 -translate-x-1/2'} mt-2 w-72 p-4 bg-white text-[#2d1e12] rounded-lg shadow-2xl z-50 pointer-events-none animate-in fade-in slide-in-from-top-2 duration-200 border-2 border-[#d4af37]`} dir="rtl">
           <div className="flex items-center gap-1.5 mb-2 border-b border-[#d4af37]/20 pb-2">
             <GraduationCap className="w-4 h-4 text-[#d4af37]" />
-            <span className="font-black text-[10px] uppercase tracking-tighter text-[#8b7355]">
+            <span className="font-black text-[10px] uppercase tracking-tighter text-[#8b7355]" dir="ltr">
               {isMain ? 'Dalil Utama (الشاهد الرئيسي)' : 'Dalil Pendukung'}
             </span>
           </div>
-          <div className="arabic-text text-justify text-xl mb-2 font-bold leading-relaxed text-[#1a0f08]" lang="ar">
+          <div className="arabic-text text-justify text-xl mb-2 font-bold leading-relaxed text-[#1a0f08]" lang="ar" dir="rtl">
             {bab.dalil_text}
           </div>
-          <div className="text-[10px] font-bold italic text-[#8b7355] text-right">— {bab.dalil_source}</div>
+          <div className="text-[10px] font-bold italic text-[#8b7355] text-left" dir="ltr">— {bab.dalil_source}</div>
           
           <span className={`absolute bottom-full ${isMain ? 'left-8' : 'left-1/2 -translate-x-1/2'} border-8 border-transparent border-b-white`}></span>
           <span className={`absolute bottom-full ${isMain ? 'left-8' : 'left-1/2 -translate-x-1/2'} border-[10px] border-transparent border-b-[#d4af37] -z-10 -mt-[2px]`}></span>
@@ -89,26 +89,41 @@ const BabTooltip: React.FC<{ bab: SupportingBab | { name: string; dalil_text: st
   );
 };
 
-const renderTextWithTooltips = (text: string) => {
+const renderTextWithBilingualRules = (text: string) => {
   if (!text) return null;
 
-  // Sort keys by length descending to match longer terms first (e.g., 'مضاف إليه' before 'مضاف')
-  const sortedKeys = Object.keys(NAHWU_DICTIONARY).sort((a, b) => b.length - a.length);
-  const pattern = new RegExp(`(${sortedKeys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-
+  // Regex matches text wrapped in ⟨ and ⟩
+  const pattern = /(⟨\s*[^⟩]+\s*⟩)/g;
   const parts = text.split(pattern);
 
   return parts.map((part, i) => {
-    const matchedTerm = sortedKeys.find(key => key === part);
-    if (matchedTerm) {
+    if (part.startsWith('⟨') && part.endsWith('⟩')) {
+      const term = part.slice(1, -1).trim();
+      const matchedDefinition = NAHWU_DICTIONARY[term];
+      
       return (
-        <Tooltip key={i} term={matchedTerm} definition={NAHWU_DICTIONARY[matchedTerm]}>
-          {part}
-        </Tooltip>
+        <span key={i} className="mx-1">
+          {matchedDefinition ? (
+            <Tooltip term={term} definition={matchedDefinition}>
+              <span className="font-bold text-[#8b7355] arabic-text">{term}</span>
+            </Tooltip>
+          ) : (
+            <span className="font-bold text-[#8b7355] arabic-text">{term}</span>
+          )}
+        </span>
       );
     }
     return part;
   });
+};
+
+const renderPesantrenParagraphs = (text: string, extraClasses: string = "") => {
+  if (!text) return null;
+  return text.split('\n').filter(p => p.trim() !== '').map((para, idx) => (
+    <p key={idx} className={`text-justify indent-10 mb-4 last:mb-0 leading-relaxed ${extraClasses}`} dir="ltr">
+      {renderTextWithBilingualRules(para)}
+    </p>
+  ));
 };
 
 export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
@@ -123,7 +138,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
       {/* Classification Banner */}
       <div className="bg-[#4a3728] text-white p-6 rounded-lg shadow-xl classic-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div className="flex-grow">
-          <span className="text-[#d4af37] text-xs font-bold uppercase tracking-widest mb-1 block">الباب • Bab</span>
+          <span className="text-[#d4af37] text-xs font-bold uppercase tracking-widest mb-1 block">الباب • Bab Utama</span>
           
           <BabTooltip bab={mainBabWithDalil} isMain={true}>
             <div className="group cursor-help">
@@ -134,10 +149,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
             </div>
           </BabTooltip>
 
-          <div className="flex flex-wrap gap-2.5 mt-2">
+          <div className="flex flex-wrap gap-2.5 mt-2" dir="rtl">
             {result.bab_pendukung.map((bab, idx) => (
               <BabTooltip key={idx} bab={bab}>
-                <span className="bg-[#8b7355]/40 text-[#d4af37] text-[11px] font-bold px-3 py-1.5 rounded-full border border-[#d4af37]/30 flex items-center hover:bg-[#d4af37]/20 transition-colors cursor-help arabic-text">
+                <span className="bg-[#8b7355]/40 text-[#d4af37] text-[11px] font-bold px-3 py-1.5 rounded-full border border-[#d4af37]/30 flex items-center hover:bg-[#d4af37]/20 transition-colors cursor-help arabic-text" dir="rtl">
                   <Layers className="w-3 h-3 ml-1.5 opacity-70" /> {bab.name}
                 </span>
               </BabTooltip>
@@ -150,9 +165,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
             <span className="text-[10px] font-black text-[#d4af37] uppercase tracking-tighter">الخلاصة • RINGKASAN</span>
             <Book className="w-4 h-4 text-[#d4af37] opacity-60" />
           </div>
-          <p className="text-base leading-relaxed text-justify text-white/95 font-medium">
-            {renderTextWithTooltips(result.summary)}
-          </p>
+          <div className="text-sm text-white/95 font-medium italic">
+            {renderPesantrenParagraphs(result.summary, "!indent-0 text-center")}
+          </div>
         </div>
       </div>
 
@@ -167,7 +182,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
           <table className="w-full text-sm table-fixed min-w-[750px]">
             <thead>
               <tr className="bg-[#fcfbf7] text-[#4a3728] border-b-2 border-[#8b7355]">
-                <th className="w-1/5 px-4 py-3 text-right arabic-text font-bold text-xl">الكلمة</th>
+                <th className="w-1/5 px-4 py-3 text-right arabic-text font-bold text-xl" dir="rtl">الكلمة</th>
                 <th className="w-1/5 px-4 py-3 text-left font-bold uppercase tracking-wider text-[11px] text-[#4a3728]">الموقع (Jabatan)</th>
                 <th className="w-1/4 px-4 py-3 text-left font-bold uppercase tracking-wider text-[11px] text-[#4a3728]">الإعراب (Status)</th>
                 <th className="w-auto px-4 py-3 text-left font-bold uppercase tracking-wider text-[11px] text-[#4a3728]">السبب (Alasan)</th>
@@ -176,28 +191,31 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
             <tbody>
               {result.irab_table.map((item, idx) => (
                 <tr key={idx} className="border-b border-gray-100 hover:bg-[#fffdf8] transition-colors align-top">
-                  <td className="px-4 py-5 text-right font-black arabic-text text-2xl text-[#8b7355] break-words">{item.word}</td>
+                  <td className="px-4 py-5 text-right font-black arabic-text text-2xl text-[#8b7355] break-words" dir="rtl">{item.word}</td>
                   <td className="px-4 py-5 whitespace-normal break-words">
                     <div className="font-bold text-[#1a0f08] text-base leading-snug arabic-text" dir="rtl">
                       {item.role}
                     </div>
                   </td>
                   <td className="px-4 py-5 whitespace-normal">
-                    <span className={`px-3 py-1.5 rounded text-[11px] font-black mr-1 shadow-sm inline-block mb-2 arabic-text ${
-                      item.state.includes('مرفوع') ? 'bg-blue-100 text-blue-900' :
-                      item.state.includes('منصوب') ? 'bg-green-100 text-green-900' :
-                      item.state.includes('مجرور') ? 'bg-red-100 text-red-900' :
-                      'bg-gray-100 text-gray-900'
-                    }`} dir="rtl">
-                      {item.state}
-                    </span>
-                    <div className="text-[11px] text-gray-800 font-bold mt-1 leading-tight break-words">
-                      العلامة: <span className="arabic-text" dir="rtl">{item.sign}</span>
+                    <div className="flex flex-col items-start">
+                      <span className={`px-3 py-1.5 rounded text-[11px] font-black shadow-sm mb-2 arabic-text ${
+                        item.state.includes('مرفوع') ? 'bg-blue-100 text-blue-900' :
+                        item.state.includes('منصوب') ? 'bg-green-100 text-green-900' :
+                        item.state.includes('مجرور') ? 'bg-red-100 text-red-900' :
+                        'bg-gray-100 text-gray-900'
+                      }`} dir="rtl">
+                        {item.state}
+                      </span>
+                      <div className="text-[11px] text-gray-800 font-bold mt-1 leading-tight flex items-center gap-1 arabic-text" dir="rtl">
+                        <span>العلامة:</span>
+                        <span>{item.sign}</span>
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-5">
-                    <div className="text-xs text-[#4a3728] font-medium italic bg-[#fcfbf7] p-3 rounded border border-[#e2e1d5]/50 text-justify leading-relaxed break-words whitespace-normal shadow-inner">
-                      {item.reason}
+                    <div className="bg-[#fcfbf7] p-3 rounded border border-[#e2e1d5]/50 shadow-inner">
+                      {renderPesantrenParagraphs(item.reason, "!indent-6 text-xs italic text-[#4a3728]")}
                     </div>
                   </td>
                 </tr>
@@ -213,21 +231,22 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
           <h3 className="flex items-center text-[#2d1e12] font-black mb-4 uppercase tracking-tighter text-sm border-b border-[#e2e1d5] pb-2">
             <Info className="w-4 h-4 mr-2" /> التعليل النحوي • Justifikasi
           </h3>
-          <p className="text-[#1a0f08] font-medium leading-relaxed text-sm whitespace-pre-wrap text-justify flex-grow">
-            {renderTextWithTooltips(result.justifikasi)}
-          </p>
+          <div className="text-[#1a0f08] font-medium text-sm flex-grow">
+            {renderPesantrenParagraphs(result.justifikasi)}
+          </div>
         </div>
 
         <div className="bg-[#fdfcf0] p-6 rounded-lg shadow-md border-l-4 border-[#d4af37] flex flex-col">
           <h3 className="flex items-center text-[#2d1e12] font-black mb-4 uppercase tracking-tighter text-sm border-b border-[#d4af37]/20 pb-2">
             <Quote className="w-4 h-4 mr-2" /> الشاهد الرئيسي (Dalil): {result.dalil.source}
           </h3>
-          <div className="arabic-text text-3xl text-justify mb-4 text-[#1a0f08] leading-loose font-bold flex-grow" lang="ar">
+          <div className="arabic-text text-3xl text-right mb-4 text-[#1a0f08] leading-loose font-bold flex-grow" lang="ar" dir="rtl">
             {result.dalil.text}
           </div>
-          <p className="text-xs text-gray-700 italic border-t border-[#d4af37]/20 pt-3 font-medium text-justify">
-            "{result.dalil.translation}"
-          </p>
+          <div className="text-xs text-gray-700 italic border-t border-[#d4af37]/20 pt-3">
+             <p className="text-justify font-bold text-[#8b7355] mb-1">Terjemahan:</p>
+             {renderPesantrenParagraphs(result.dalil.translation, "!indent-4 text-xs")}
+          </div>
         </div>
       </div>
     </div>
