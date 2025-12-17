@@ -7,9 +7,15 @@ export interface IrabDetail {
   reason: string;
 }
 
+export interface SupportingBab {
+  name: string;
+  dalil_text: string;
+  dalil_source: string;
+}
+
 export interface AnalysisResult {
   bab_utama: string;
-  bab_pendukung: string[];
+  bab_pendukung: SupportingBab[];
   justifikasi: string;
   dalil: {
     source: string;
